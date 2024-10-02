@@ -131,14 +131,18 @@ export default {
 			}
 		}
 
-		function getProcessedNeighbours(cellCoords) {
-			const neighbours = [];
+		function getNeighbours(queue, cellCoords, options = {}) {
+			const {
+				onlyProcessed
+			} = options
+
+			const neighbours = []
 
 			const dirs = [
 				[1, 0, 'top-bottom'],
 				[0, -1, 'right-left'],
 				[0, 1, 'left-right'],
-				[-1, 0, 'bottom-top'],
+				[-1, 0, 'bottom-top']
 			]
 
 			const [
@@ -155,74 +159,32 @@ export default {
 						cell => cell[0] === nr && cell[1] === nc
 					)
 
-				// Out of bounds
-				if (
-					nr < 0
-					|| nc < 0
-					|| nr >= ROW_COUNT
-					|| nc >= COLUMN_COUNT
-					|| !processedCell
-				) {
-					continue
-				}
-
-				const cell = [
-					...processedCell,
-					direction,
-				]
-
-				neighbours.push(cell)
-			}
-
-			return neighbours
-		}
-
-		function getCellNeighbours(queue, cellCoords) {
-			const neighbours = [];
-
-			// console.log(cellCoords)
-			const dirs = [
-				[-1, 0],
-				[0, 1],
-				[1, 0],
-				[0, -1]
-			]
-
-			const [
-				row,
-				col
-			] = cellCoords
-
-			for (const [dr, dc] of dirs) {
-				let nr = row + dr;
-				let nc = col + dc;
-
-				const isProcessedCell = cellsWithImage
-					.some(
-						cell => cell[0] === nr && cell[1] === nc
-					)
-
 				const isCellInQueue = queue
 					.some(
 						cellInfo => cellInfo[0] === nr && cellInfo[1] === nc
 					)
 
-				// Out of bounds
 				if (
 					nr < 0
 					|| nc < 0
 					|| nr >= ROW_COUNT
 					|| nc >= COLUMN_COUNT
-					|| isProcessedCell
+					|| (!processedCell && onlyProcessed)
+					|| (!!processedCell && !onlyProcessed)
 					|| isCellInQueue
 				) {
 					continue
 				}
 
-				const cell = [
-					nr,
-					nc
-				]
+				const cell = onlyProcessed
+					? [
+						...processedCell,
+						direction
+					]
+					: [
+						nr,
+						nc
+					]
 
 				neighbours.push(cell)
 			}
@@ -231,13 +193,19 @@ export default {
 		}
 
 		function addCellNeighbours(queue, cellCoords) {
-			const neighbours = getCellNeighbours(queue, cellCoords)
+			const neighbours = getNeighbours(queue, cellCoords)
 
 			queue.unshift(...neighbours)
 		}
 
-		function getSuitableImagesForCell(cellCoords) {
-			const neighbours = getProcessedNeighbours(cellCoords)
+		function getSuitableImagesForCell(queue, cellCoords) {
+			const neighbours = getNeighbours(
+				queue,
+				cellCoords,
+				{
+					onlyProcessed: true
+				}
+			)
 
 			if (!neighbours.length) {
 				return BASE_IMAGE_DATAS
@@ -279,7 +247,7 @@ export default {
 		}
 
 		function drawCell(ctx, processedCells, cellInfo, cellWidth, cellHeight) {
-			const suitableImages = getSuitableImagesForCell(cellInfo)
+			const suitableImages = getSuitableImagesForCell(cellQueue, cellInfo)
 
 			const row = cellInfo[0] * CELL_WIDTH
 			const col = cellInfo[1] * CELL_HEIGHT
