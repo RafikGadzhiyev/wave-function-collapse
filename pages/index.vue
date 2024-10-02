@@ -33,7 +33,7 @@
 				</div>
 			</div>
 
-			<div class="flex-1">
+			<div class="flex-1 max-h-[100vh]">
 				<canvas
 					ref="canvasElemRef"
 					class="wave-function-collapse__canvas w-full h-full bg-gray-200"
